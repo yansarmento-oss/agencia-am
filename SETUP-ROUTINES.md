@@ -1,34 +1,56 @@
-# Setup das Routines + Automations Notion
+# Setup Final — só falta a UI
 
-Este documento te guia em **2 etapas** pra ligar o sistema:
+✅ **Já feito por mim (via API):**
+- 5 routines criadas em claude.ai/code/triggers
+- Notion + Google Drive + Canva connectors ligados em todas
+- Tools básicas habilitadas (Bash, Read, Write, Skill, etc)
+- am-cron-watchdog com schedule cron `7 */2 * * *` (a cada 2 horas, no minuto 7)
 
-1. Criar 5 routines em [claude.ai/code/routines](https://claude.ai/code/routines) (cada uma com URL pública pro Notion chamar)
-2. Criar 4 automations no Notion DB "📋 Demandas de Roteiro"
-
-Tempo total: ~30 minutos.
+❌ **Você precisa fazer (UI, ~25 min):**
+1. Pra cada routine: colar o **prompt** + conectar **repo GitHub**
+2. Pra 4 routines: gerar **token API** + copiar **URL** do trigger
+3. No Notion: criar **4 automations** com webhook actions
 
 ---
 
-## Etapa 1 — Criar as 5 routines em claude.ai/code/routines
+## As 5 routines criadas
 
-Pra cada routine abaixo, faz isso:
+| # | Nome | ID | Link direto |
+|---|---|---|---|
+| 1 | `am-estrategia-gerar` | `trig_01Ka9Ht62yCh5GZkHengxeN8` | https://claude.ai/code/triggers/trig_01Ka9Ht62yCh5GZkHengxeN8 |
+| 2 | `am-estrategia-refazer` | `trig_01RxCqhmwjAo78SYYdUanHnd` | https://claude.ai/code/triggers/trig_01RxCqhmwjAo78SYYdUanHnd |
+| 3 | `am-roteiros-gerar` | `trig_01JRXNvLFuB6JsLMqocHUUxN` | https://claude.ai/code/triggers/trig_01JRXNvLFuB6JsLMqocHUUxN |
+| 4 | `am-roteiros-refazer` | `trig_01LR2vMh3jwZ6YdTW4oDGEN6` | https://claude.ai/code/triggers/trig_01LR2vMh3jwZ6YdTW4oDGEN6 |
+| 5 | `am-cron-watchdog` (cron) | `trig_01E8C6Nf4a5RyZe3PjGvRc4t` | https://claude.ai/code/triggers/trig_01E8C6Nf4a5RyZe3PjGvRc4t |
 
-1. Vai em https://claude.ai/code/routines
-2. Clica em **+ New routine** (ou similar)
-3. Em **Name**: cola o nome exato (ex: `am-estrategia-gerar`)
-4. Em **Repository**: conecta `yansarmento-oss/agencia-am` (autoriza GitHub access se for a primeira vez)
-5. Em **Prompt**: cola o prompt completo da seção correspondente abaixo
-6. Em **Triggers**: adiciona um trigger do tipo **API** → clica **Generate token** → **copia o token e a URL imediatamente** (token só aparece 1x)
-7. Salva a routine
-8. Cola o token e URL numa anotação tua (vai precisar pra Etapa 2)
+---
 
-### Routine 1 — `am-estrategia-gerar`
+## Etapa 1 — Completar cada routine na UI (5×4min)
 
-**Name:** `am-estrategia-gerar`
+Pra cada uma das 5 routines:
 
-**Repository:** `yansarmento-oss/agencia-am`
+1. Abre o link direto da tabela acima
+2. Clica em **Edit** (ou ícone de lápis)
+3. **Conectar repositório:**
+   - Procura campo "Repository" / "Repositories"
+   - Adiciona: `yansarmento-oss/agencia-am`
+   - Autoriza GitHub access se for a primeira vez
+4. **Colar o prompt:**
+   - Procura campo "Prompt" / "Instructions" / "System prompt"
+   - Cola o prompt correspondente da seção [Prompts](#prompts) abaixo
+5. **(Apenas pras 4 webhook routines, NÃO a watchdog):** Adicionar trigger API:
+   - Em "Triggers" / "Add trigger" → escolhe **API**
+   - Clica **Generate token** → **COPIA O TOKEN AGORA** (só aparece 1x, começa com `sk-ant-oat01-`)
+   - **COPIA A URL** do webhook (algo tipo `https://api.anthropic.com/v1/claude_code/routines/trig_XXX/fire`)
+   - Cola token+URL numa nota tua
+6. Salva
 
-**Prompt:**
+---
+
+## <a name="prompts"></a>Prompts (cola direto)
+
+### Prompt da Routine 1 — `am-estrategia-gerar`
+
 ```
 Você é o agente do Trigger 1 do Sistema A.M. de Roteiros (agência médica do Yan). Foi invocado por um webhook do Notion automation quando um card no DB "📋 Demandas de Roteiro" (collection://d65eac39-53cd-4a76-87d3-87988ff0b1cc) teve o Status alterado para "🤖 Gerando Estratégia".
 
@@ -56,21 +78,14 @@ OUTPUT FINAL: Status do card atualizado para "🧠 Estratégia p/ Revisar" + com
 ABORT CONDITIONS: Se cliente sem Perfil V1, período inválido, postagens/semana ausente — comentar no card explicando o problema e parar sem alterar status.
 ```
 
----
+### Prompt da Routine 2 — `am-estrategia-refazer`
 
-### Routine 2 — `am-estrategia-refazer`
-
-**Name:** `am-estrategia-refazer`
-
-**Repository:** `yansarmento-oss/agencia-am`
-
-**Prompt:**
 ```
 Você é o agente do Trigger 1.5 do Sistema A.M. de Roteiros. Foi invocado por um webhook do Notion automation quando um card no DB "📋 Demandas de Roteiro" teve o Status alterado para "🤖 Refazendo Estratégia" (loop de revisão).
 
 INPUT: O webhook payload vem no campo "text" da invocação contendo o page_id do card.
 
-CONTEXTO: Leia skills/AM_estrategia.md (em especial a Fase 4 — Modo refazer) + os mesmos copy-modules e memórias da routine am-estrategia-gerar.
+CONTEXTO: Você tem acesso ao repositório yansarmento-oss/agencia-am. Leia skills/AM_estrategia.md (em especial a Fase 4 — Modo refazer) + os mesmos copy-modules e memórias da routine am-estrategia-gerar.
 
 EXECUÇÃO: Siga modo refazer:
 1. Buscar a subpágina de Estratégia já existente (filha do card, título começando com "🧠 Estratégia")
@@ -83,21 +98,14 @@ EXECUÇÃO: Siga modo refazer:
 NÃO apague o callout "Feedback do aprovador" — ele continua disponível pra próxima rodada. Devolver log resumido no chat.
 ```
 
----
+### Prompt da Routine 3 — `am-roteiros-gerar`
 
-### Routine 3 — `am-roteiros-gerar`
-
-**Name:** `am-roteiros-gerar`
-
-**Repository:** `yansarmento-oss/agencia-am`
-
-**Prompt:**
 ```
 Você é o agente do Trigger 2 do Sistema A.M. de Roteiros. Foi invocado por um webhook do Notion automation quando um card no DB "📋 Demandas de Roteiro" teve o Status alterado para "🤖 Gerando Roteiros".
 
 INPUT: O webhook payload vem no campo "text" contendo o page_id do card.
 
-CONTEXTO: Leia skills/AM_roteiros.md (instruções completas em modo gerar) + TODOS os copy-modules e memórias do repositório. A skill é comandada por Hopkins + Schwartz com módulos de Carlton (hooks-reels), Sugarman (slippery-slide), Bencivenga (hooks-carrossel), Kennedy soft (ctas-medicos).
+CONTEXTO: Você tem acesso ao repositório yansarmento-oss/agencia-am. Leia skills/AM_roteiros.md (instruções completas em modo gerar) + TODOS os copy-modules e memórias do repositório. A skill é comandada por Hopkins + Schwartz com módulos de Carlton (hooks-reels), Sugarman (slippery-slide), Bencivenga (hooks-carrossel), Kennedy soft (ctas-medicos).
 
 PRÉ-CONDIÇÃO OBRIGATÓRIA: A subpágina de Estratégia (filha do card, "🧠 Estratégia ...") deve existir COM Big Idea preenchida no topo. Se não existir, comentar e abortar.
 
@@ -118,21 +126,14 @@ EXECUÇÃO: Siga modo gerar:
 ABORT: subpágina de estratégia inexistente ou Big Idea ausente; perfil do cliente incompleto; calendário inconsistente.
 ```
 
----
+### Prompt da Routine 4 — `am-roteiros-refazer`
 
-### Routine 4 — `am-roteiros-refazer`
-
-**Name:** `am-roteiros-refazer`
-
-**Repository:** `yansarmento-oss/agencia-am`
-
-**Prompt:**
 ```
 Você é o agente do Trigger 2.5 do Sistema A.M. de Roteiros. Foi invocado por um webhook do Notion automation quando um card no DB teve o Status alterado para "🤖 Refazendo Roteiros".
 
 INPUT: O webhook payload vem no campo "text" contendo o page_id do card.
 
-CONTEXTO: Leia skills/AM_roteiros.md (em especial a Fase 4 — Modo refazer) + todos os copy-modules e memórias.
+CONTEXTO: Você tem acesso ao repositório yansarmento-oss/agencia-am. Leia skills/AM_roteiros.md (em especial a Fase 4 — Modo refazer) + todos os copy-modules e memórias.
 
 EXECUÇÃO: Siga modo refazer:
 1. Buscar subpágina de Roteiros existente (filha do card, "✍️ Roteiros ...")
@@ -151,19 +152,12 @@ EXECUÇÃO: Siga modo refazer:
 NÃO apague o callout "Feedback dos roteiros". Devolver log resumido com mudanças aplicadas.
 ```
 
----
+### Prompt da Routine 5 — `am-cron-watchdog`
 
-### Routine 5 — `am-cron-watchdog` (cron de segurança)
-
-**Name:** `am-cron-watchdog`
-
-**Repository:** `yansarmento-oss/agencia-am`
-
-**Schedule (cron):** `7 */2 * * *` (a cada 2 horas, no minuto 7)
-
-**Prompt:**
 ```
 Você é o cron de segurança do Sistema A.M. de Roteiros. Roda a cada 2 horas pra detectar cards travados em status do robô (🤖) por mais de 30 minutos — situação que indica que o webhook do Notion falhou ou que a routine principal travou no meio.
+
+CONTEXTO: Você tem acesso ao repositório yansarmento-oss/agencia-am. Leia skills/AM_estrategia.md e skills/AM_roteiros.md pra reprocessar quando necessário.
 
 EXECUÇÃO:
 1. Via Notion connector, listar cards do DB "📋 Demandas de Roteiro" (collection://d65eac39-53cd-4a76-87d3-87988ff0b1cc) com Status em qualquer um dos 4 valores cinza:
@@ -174,7 +168,7 @@ EXECUÇÃO:
 2. Pra cada card, comparar a "Última atualização" com agora. Se diff > 30 minutos, considerar travado.
 3. Pra cada card travado:
    a. Comentar no card: "⚠️ Cron watchdog detectou card travado em {status} há {N}min. Reprocessando."
-   b. Reexecutar a skill correspondente em modo gerar/refazer (ler skills/AM_estrategia.md ou skills/AM_roteiros.md conforme o status)
+   b. Reexecutar a skill correspondente em modo gerar/refazer
 4. Devolver no chat um resumo: quantos cards verificados, quantos travados, quantos reprocessados.
 
 Se nenhum card travado: log "Nenhum card travado. Sistema OK."
@@ -182,41 +176,35 @@ Se nenhum card travado: log "Nenhum card travado. Sistema OK."
 NUNCA reprocesse o mesmo card mais de 2 vezes seguidas (evita loop infinito). Se já foi reprocessado 2x, comente "🚨 Card travou 3x consecutivas. Intervenção manual necessária." e movê-lo de volta pro último status humano (📥 Demanda Criada, 🧠 Estratégia p/ Revisar, ✍️ Roteiros p/ Revisar conforme o caso).
 ```
 
-**OBSERVAÇÃO:** Pra essa routine, NÃO precisa adicionar trigger API. Ela já dispara sozinha pelo schedule cron.
-
 ---
 
 ## Etapa 2 — Criar 4 automations no Notion
 
-Antes de começar, tenha em mãos os 4 pares (URL + Token) das routines 1-4 que você gerou na Etapa 1.
+Antes de começar, tenha em mãos os **4 pares (URL + Token)** que você gerou na Etapa 1 (1 par por routine, exceto a watchdog que é cron).
 
 Pra cada automation:
 
 1. Abre o DB "📋 Demandas de Roteiro" no Notion
-2. Clica nos **3 pontinhos (•••)** no canto superior direito do DB → **Automations**
+2. Clica nos **3 pontinhos (•••)** no canto superior direito → **Automations**
 3. Clica **+ New automation**
-4. Configura conforme a tabela abaixo
+4. Configura conforme tabela:
 
-### Tabela das 4 automations
-
-| # | Trigger | Action | URL (sua, da Routine X) | Token (Bearer) |
+| # | Trigger | Action | URL | Token |
 |---|---|---|---|---|
-| 1 | When **Status** is set to **🤖 Gerando Estratégia** | **Send webhook** | URL da Routine 1 | Token da Routine 1 |
-| 2 | When **Status** is set to **🤖 Refazendo Estratégia** | **Send webhook** | URL da Routine 2 | Token da Routine 2 |
-| 3 | When **Status** is set to **🤖 Gerando Roteiros** | **Send webhook** | URL da Routine 3 | Token da Routine 3 |
-| 4 | When **Status** is set to **🤖 Refazendo Roteiros** | **Send webhook** | URL da Routine 4 | Token da Routine 4 |
+| 1 | When **Status** is set to **🤖 Gerando Estratégia** | **Send webhook** | URL Routine 1 | Token Routine 1 |
+| 2 | When **Status** is set to **🤖 Refazendo Estratégia** | **Send webhook** | URL Routine 2 | Token Routine 2 |
+| 3 | When **Status** is set to **🤖 Gerando Roteiros** | **Send webhook** | URL Routine 3 | Token Routine 3 |
+| 4 | When **Status** is set to **🤖 Refazendo Roteiros** | **Send webhook** | URL Routine 4 | Token Routine 4 |
 
-### Configuração detalhada de cada webhook
-
-Quando o Notion pedir os parâmetros do webhook:
+**Configuração de cada webhook (no formulário do Notion):**
 
 - **HTTP method:** `POST`
-- **URL:** cola a URL da routine correspondente
+- **URL:** cola a URL da routine
 - **Headers:**
-  - `Authorization`: `Bearer SEU_TOKEN_AQUI` (substitui SEU_TOKEN_AQUI pelo token da routine)
-  - `anthropic-version`: `2023-06-01`
-  - `anthropic-beta`: `experimental-cc-routine-2026-04-01`
-  - `Content-Type`: `application/json`
+  - `Authorization` = `Bearer SEU_TOKEN_AQUI`
+  - `anthropic-version` = `2023-06-01`
+  - `anthropic-beta` = `experimental-cc-routine-2026-04-01`
+  - `Content-Type` = `application/json`
 - **Body (JSON):**
 ```json
 {
@@ -224,33 +212,31 @@ Quando o Notion pedir os parâmetros do webhook:
 }
 ```
 
-(Algumas UIs do Notion permitem variáveis tipo `{{page_url}}` ou `{{page_id}}`. Se não permitir variável, pode ficar em branco — a routine vai conseguir identificar o card pela mudança de status disparada e listar cards recentes do status alvo.)
+(Se Notion não permitir variável `{{page_url}}`, deixa o body vazio — a routine vai listar cards no status alvo recentes via Notion connector e processar o mais novo)
 
-5. Salva a automation
-6. Repete pras 4 transições
+5. Salva
+6. Repete pras 4
 
 ---
 
 ## Etapa 3 — Teste end-to-end
 
-1. Cria um card de teste novo no DB Demandas
-2. Preenche: Cliente (Larissa), Período (qualquer), Postagens/semana, Orientações
-3. Move o status pra **🤖 Gerando Estratégia**
-4. Em segundos, deve aparecer:
-   - Comentário no card "iniciando..."
-   - Subpágina sendo criada
-   - Status mudando pra **🧠 Estratégia p/ Revisar**
-5. Se travar, conferir em https://claude.ai/code/sessions o log da routine
+1. Cria card de teste novo no DB Demandas (Cliente: Larissa, qualquer Período curto)
+2. Move o status pra **🤖 Gerando Estratégia**
+3. Em segundos:
+   - Notion automation dispara webhook
+   - Routine recebe, lê card via Notion connector
+   - Lê skills/AM_estrategia.md do repo GitHub
+   - Executa, cria subpágina, atualiza status pra `🧠 Estratégia p/ Revisar`
+4. Acompanha o log da execução em https://claude.ai/code/sessions
 
 ---
 
-## Troubleshooting
+## Troubleshooting rápido
 
-- **Webhook não dispara:** verificar se o Notion plan tem webhook actions habilitado (Plus+ tem). Conferir headers e body.
-- **Routine recebe webhook mas não acessa DB:** confirmar que o Notion connector está habilitado na routine + autorizou acesso ao workspace.
-- **Routine recebe mas não escreve:** verificar permissões de escrita do connector Notion na sua workspace.
-- **Token rejeitado:** token de routine começa com `sk-ant-oat01-`. Se gerou novo, o anterior é revogado.
+- **Webhook dispara mas routine não roda:** check token (formato `sk-ant-oat01-`). Se gerou novo na UI, o anterior é revogado.
+- **Routine roda mas não escreve no Notion:** confere se o connector Notion da routine tem permissão de escrita no workspace
+- **Routine não acha skills/copy-modules:** confere se o repo `yansarmento-oss/agencia-am` foi conectado na routine
+- **Erro 400 do webhook:** falta header `anthropic-beta: experimental-cc-routine-2026-04-01`
 
----
-
-Conforme você for configurando, manda print/erro pra eu desbloquear.
+Manda print/erro se travar.
