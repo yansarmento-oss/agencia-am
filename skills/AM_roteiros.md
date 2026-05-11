@@ -238,34 +238,71 @@ E `ctas-medicos.md`:
 
 ### Fase 3 — Escrita no Notion (modo gerar)
 
-1. Criar subpágina filha do card:
-   - Título: `✍️ Roteiros {MesIniAbrev}/{MesFimAbrev} {Ano} — {NomeCliente}` (ex: `✍️ Roteiros Maio/Jun 2026 — Dra. Larissa`)
+#### 🚨 REGRA DE OURO — Notion-flavored Markdown (LEIA ANTES DE QUALQUER tool call)
 
-1.1. **Atualizar a seção `## Roteiros` do card pai.** Após criar a subpágina, usar `notion-update-page` com `update_content` pra trocar o placeholder atual da seção "## Roteiros" (geralmente texto em itálico "*Subpágina de roteiros será criada automaticamente...*") pelo link da subpágina nova:
+Toda chamada a `notion-create-pages` (`content`) ou `notion-update-page` (`content_updates`, `new_str`) tem que receber **caracteres reais**, não strings com escape literal. Esse é o bug #1 das routines e quebra o card por inteiro.
 
+**❌ ERRADO** (resultado renderiza texto cru tipo "Roteirosn\<callout\>nt..."):
+- Passar `"## Roteiros\\n<callout icon=\"🎬\">"` no JSON (escape duplo do backslash → backslash literal no Notion)
+- Passar `"## Roteirosn<calloutn"` (engoliu o backslash do `\n`, letra "n" sobrou)
+- Escapar `<` e `>` com `\<` e `\>` (Notion não exige escape de tags, e o escape vira texto literal)
+
+**✅ CERTO** (resultado renderiza bloco real):
+- No JSON do tool call, usar `"\n"` (uma barra + n) → Notion recebe newline real
+- Usar `<callout icon="🎬">`, `<callout icon="🎠">`, `</callout>` SEM escape de `<` e `>`
+- Pipe em `CRM 12345 | RQE 678` precisa ser escapado como `\|` em sintaxe markdown que pode confundir parser (tabelas, inline) — em callout normal, pipe normal funciona
+- Emojis literais (📝 🎬 🎠 ✍️) — nunca escape Unicode `\uXXXX`
+
+**Antes de chamar a tool, mentalmente conte:** se a string contém `\\n` (dois backslashes) ou `\<` (backslash + <), tá errado. Re-escreva com newline real e tags sem escape.
+
+#### Passo 1 — Criar subpágina de Roteiros (filha do card)
+
+Use `mcp__claude_ai_Notion__notion-create-pages` com:
+- `parent`: `{ "type": "page_id", "page_id": "<UUID do card>" }`
+- `properties`: `{ "title": "✍️ Roteiros {MesIniAbrev}/{MesFimAbrev} {Ano} — {NomeCliente}" }`
+- `content`: corpo completo dos 15 roteiros (quote header + bloco "Como revisar" + toggles por semana com callouts dos N conteúdos). Ver template em `reference_am_estrategia_roteiros_template.md` seção "Subpágina de Roteiros".
+
+Anote o `page_url` retornado — será usado no Passo 2.
+
+#### Passo 2 — Atualizar a seção `## Roteiros` do card pai (cirúrgico, NÃO destrutivo)
+
+Primeiro, fetch do card pai pra obter o conteúdo atual (`notion-fetch` com `id: page_url do card`).
+
+Olhe o `<content>` retornado. Localize a seção `## Roteiros` e o que vem DEPOIS dela (geralmente o placeholder em itálico ou um link de versão anterior). O texto entre `## Roteiros` e o próximo `## Feedback dos roteiros` é o que precisa ser substituído.
+
+Use `notion-update-page` com `command: "update_content"` e UM ÚNICO `content_updates`:
+
+```json
+{
+  "old_str": "## Roteiros\n[CONTEÚDO ATUAL DA SEÇÃO — copie LITERAL do fetch, do heading até logo antes do próximo heading]",
+  "new_str": "## Roteiros\n<page url=\"{URL_SUBPAGINA_CRIADA}\">✍️ Roteiros {Mes}/{Mes+1} {Ano} — {NomeCliente}</page>"
+}
 ```
-## Roteiros
-<page url="{URL_DA_SUBPAGINA_CRIADA}">✍️ Roteiros {Mes}/{Mes+1} {Ano} — {NomeCliente}</page>
-```
 
-**CRITICAL:** preservar os callouts "## Feedback do aprovador" e "## Feedback dos roteiros" intactos — eles podem ter conteúdo do revisor. Usar search-and-replace cirúrgico, não `replace_content` global.
+**CRITICAL:** o `old_str` precisa bater EXATO com o que o fetch retornou. Copie literal, não invente. **NUNCA usar `replace_content`** nesta fase — vai apagar os callouts de Feedback (do aprovador e dos roteiros), destruindo o loop de revisão.
 
-2. Conteúdo segue **fielmente** o template em `reference_am_estrategia_roteiros_template.md` seção "Subpágina de Roteiros — template":
-   - Quote header: `> **Ciclo:** {datas} · {N} conteúdos ({X} Reels de 60-90s + {Y} Carrosséis) · Duração-alvo Reels: **240-280 palavras**`
-   - Bloco "Como revisar este documento" (instruções ao revisor)
-   - Separador `---`
-   - Por semana: heading 3 toggle verde com mesmo título/tema da estratégia
-   - Por conteúdo: callout (🎬 Reel / 🎠 Carrossel) com toda a estrutura completa (hook, capas, roteiro/slides, legenda, assinatura, referências)
-   - Para cada Reel/Carrossel, **dentro do callout** incluir um sub-toggle colapsado `💡 Variantes de hook` ou `💡 Variantes de capa` com as 3 opções geradas + justificativa da escolha (pro revisor poder trocar se quiser).
+Se a seção `## Roteiros` **não existir** no card pai (estrutura quebrada), abortar com comentário no card: `"Card pai sem seção '## Roteiros'. Estrutura do template quebrada. Rode /AM_estrategia primeiro pra reconstruir."` + parar sem alterar status.
 
-3. **Atenção técnica de renderização Notion:**
-   - Usar `{toggle="true" color="green_bg"}` no heading 3 das semanas
-   - Indentar conteúdo do toggle com 1 tab
-   - Callout: `<callout icon="🎬">` ou `<callout icon="🎠">`, conteúdo indentado 1 tab dentro
-   - Sub-toggle dentro do callout: heading h4 toggle padrão
-   - Caracteres reais (newlines, emojis) — nunca `\n` ou `\uXXXX`
-   - Pipe escapado como `\|` em assinaturas
-   - Quebras de linha entre parágrafos da legenda usar linha em branco (não `<br>`)
+#### Passo 3 — Estrutura interna da subpágina de Roteiros
+
+Conteúdo segue **fielmente** o template em `reference_am_estrategia_roteiros_template.md` seção "Subpágina de Roteiros — template":
+- Quote header: `> **Ciclo:** {datas} · {N} conteúdos ({X} Reels de 60-90s + {Y} Carrosséis) · Duração-alvo Reels: **240-280 palavras**`
+- Bloco "Como revisar este documento" (instruções ao revisor)
+- Separador `---`
+- Por semana: heading 3 toggle verde com mesmo título/tema da estratégia
+- Por conteúdo: callout (🎬 Reel / 🎠 Carrossel) com toda a estrutura completa (hook, capas, roteiro/slides, legenda, assinatura, referências)
+- Para cada Reel/Carrossel, **dentro do callout** incluir um sub-toggle colapsado `💡 Variantes de hook` ou `💡 Variantes de capa` com as 3 opções geradas + justificativa da escolha (pro revisor poder trocar se quiser).
+
+#### Detalhes técnicos de renderização Notion (lembrete final)
+
+- Heading toggle: `### **Título** {toggle="true" color="green_bg"}` — atributo entre chaves no FINAL do heading
+- Conteúdo do toggle: indentar 1 tab abaixo do heading
+- Callout: `<callout icon="🎬">` (Reel) ou `<callout icon="🎠">` (Carrossel), `</callout>` no fechamento. Conteúdo indentado 1 tab.
+- Sub-toggle dentro do callout: heading `#### **Título** {toggle="true"}` padrão
+- Newlines: caracteres reais. No JSON do tool call, `"\n"` (uma barra) → Notion recebe newline real.
+- Emojis: literais (📝 🎬 🎠 ✍️) — nunca `\uXXXX`
+- Pipe na assinatura dentro de callout: pipe normal `|`. Em tabela ou inline markdown, escape `\|`.
+- Quebras de linha entre parágrafos da legenda: linha em branco (não `<br>`)
 
 ### Fase 4 — Modo refazer (loop com feedback)
 
@@ -280,7 +317,7 @@ E `ctas-medicos.md`:
    - Feedback global: rodar correção em todos os 15 conteúdos
    - Feedback específico: refazer só o conteúdo apontado, mantendo os outros
 6. **Preservar histórico:** dentro da subpágina, criar (ou atualizar) toggle no FINAL `📚 Versões anteriores` (gray_bg). Mover conteúdo da V atual pra dentro, prefixado por `### V{N} · gerada em {data ISO}` (incrementar N).
-7. Reescrever o corpo principal com a nova versão.
+7. Reescrever o corpo principal com a nova versão usando `notion-update-page` `replace_content` **APENAS na subpágina** (não no card pai). O card pai não deve ser tocado em modo refazer — o link da subpágina já está correto e os callouts de feedback precisam ficar intactos.
 8. Adicionar nota no início (após quote header): `> **Versão {N+1}** · refeita em {data ISO} aplicando feedback do aprovador. Mudanças aplicadas: [resumo curto]. Histórico no toggle "📚 Versões anteriores" no final.`
 9. **Adicionar checklist de revisão** (estilo card Reinaldo DEM-9) ao final do documento, mostrando o que foi corrigido:
    ```

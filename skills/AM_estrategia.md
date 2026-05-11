@@ -143,56 +143,94 @@ Se algum check falhar: corrigir antes de escrever. Se não conseguir corrigir se
 
 ### Fase 6 — Escrita no Notion
 
-**Modo `gerar`:**
+#### 🚨 REGRA DE OURO — Notion-flavored Markdown (LEIA ANTES DE QUALQUER tool call)
 
-1. Criar subpágina filha do card (mcp__claude_ai_Notion__notion-create-pages com `parent: page_url do card`):
-   - Título: `🧠 Estratégia {MesIniAbrev}/{MesFimAbrev} {Ano} — {NomeCliente}` (ex: `🧠 Estratégia Maio/Jun 2026 — Dra. Larissa`)
+Toda chamada a `notion-create-pages` (`content`) ou `notion-update-page` (`content_updates`, `new_str`) tem que receber **caracteres reais**, não strings com escape literal. Esse é o bug #1 das routines e quebra o card por inteiro.
 
-1.1. **Garantir estrutura do card pai** (4 seções com callouts de feedback). Após criar a subpágina, verificar se o card pai tem as 4 seções no padrão. Se NÃO tiver (card criado sem template, ou template incompleto), usar `mcp__claude_ai_Notion__notion-update-page` com `replace_content` pra escrever:
+**❌ ERRADO** (resultado renderiza texto cru tipo "Estratégian\<callout\>nt..."):
+- Passar `"## Estratégia\\n<callout icon=\"📝\">"` no JSON (escape duplo do backslash → backslash literal no Notion)
+- Passar `"## Estratégian<calloutn"` (engoliu o backslash do `\n`, letra "n" sobrou)
+- Escapar `<` e `>` com `\<` e `\>` (Notion não exige escape de tags, e o escape vira texto literal)
+
+**✅ CERTO** (resultado renderiza bloco real):
+- No JSON do tool call, usar `"\n"` (uma barra + n) → Notion recebe newline real
+- Usar `<callout icon="📝">` e `</callout>` SEM escape de `<` e `>`
+- Pipe em `CRM 12345 | RQE 678` precisa ser escapado como `\|` só dentro de tabelas/inline markdown — em callouts comuns, pipe normal funciona
+- Emojis literais (📝 🎬 🎠 🧠) — nunca escape Unicode `\uXXXX`
+
+**Antes de chamar a tool, mentalmente conte:** se a string contém `\\n` (dois backslashes) ou `\<` (backslash + <), tá errado. Re-escreva com newline real e tags sem escape.
+
+#### Modo `gerar`
+
+**Passo 1 — Criar subpágina de Estratégia (filha do card):**
+
+Use `mcp__claude_ai_Notion__notion-create-pages` com:
+- `parent`: `{ "type": "page_id", "page_id": "<UUID do card>" }`
+- `properties`: `{ "title": "🧠 Estratégia {MesIniAbrev}/{MesFimAbrev} {Ano} — {NomeCliente}" }`
+- `content`: corpo completo da estratégia (Big Idea + datas-chave + pilares + territórios + toggles por semana com callouts dos N conteúdos + validações operacionais + próximo passo). Ver template em `reference_am_estrategia_roteiros_template.md`.
+
+Anote o `page_url` retornado — será usado no Passo 2.
+
+**Passo 2 — Atualizar a seção `## Estratégia` do card pai (cirúrgico):**
+
+Primeiro, fetch do card pai pra obter o conteúdo atual (`notion-fetch` com `id: page_url do card`).
+
+Olhe o `<content>` retornado. Há 2 cenários:
+
+**Cenário A — card pai JÁ tem as 4 seções no formato correto** (4 headings: `## Estratégia` + `## Feedback do aprovador` + `## Roteiros` + `## Feedback dos roteiros`):
+
+Use `notion-update-page` com `command: "update_content"` e UM ÚNICO `content_updates`:
+
+```json
+{
+  "old_str": "## Estratégia\n[CONTEÚDO ATUAL DA SEÇÃO — copie LITERAL do fetch, do heading até logo antes do próximo heading]",
+  "new_str": "## Estratégia\n<page url=\"{URL_SUBPAGINA_CRIADA}\">🧠 Estratégia {Mes}/{Mes+1} {Ano} — {NomeCliente}</page>"
+}
+```
+
+**CRITICAL:** o `old_str` precisa bater EXATO com o que o fetch retornou (incluindo eventuais `\<page\>` quebrados se já houver versão anterior). Não invente; copie literal. NÃO use `replace_content` — vai apagar os callouts de feedback.
+
+**Cenário B — card pai NÃO tem as 4 seções** (estrutura ausente, ou só placeholder vazio do template):
+
+Use `notion-update-page` com `command: "replace_content"` e `new_str` contendo o corpo completo das 4 seções. **Atenção máxima à regra de ouro acima** — newlines reais, tags `<callout>` sem escape:
 
 ```
 ## Estratégia
-<page url="{URL_DA_SUBPAGINA_CRIADA}">🧠 Estratégia {Mes}/{Mes+1} {Ano} — {NomeCliente}</page>
+<page url="{URL_SUBPAGINA_CRIADA}">🧠 Estratégia {Mes}/{Mes+1} {Ano} — {NomeCliente}</page>
+
 ## Feedback do aprovador
 <callout icon="📝">
 	Espaço para anotações do aprovador sobre a estratégia. Aprovar, ajustar ou refazer? Quais conteúdos mudam, quais ficam, quais somem?
 </callout>
+
 ## Roteiros
 *Subpágina de roteiros será criada automaticamente pela `/AM_roteiros` quando o card for movido para `✅ Estratégia Aprovada`.*
+
 ## Feedback dos roteiros
 <callout icon="📝">
 	Espaço para anotações sobre os roteiros após produção (ciclo seguinte do Kanban).
 </callout>
 ```
 
-Se o card JÁ tem as 4 seções, usar `update_content` com search-and-replace pra trocar apenas o conteúdo da seção "## Estratégia" pelo link da subpágina nova (preservar os callouts de feedback que já existirem com conteúdo do aprovador).
-
-2. Conteúdo da subpágina segue **fielmente** o template em `reference_am_estrategia_roteiros_template.md`, **acrescido do bloco Big Idea no topo**:
-   - Quote header com Ciclo + posts/semana + total + Mix
-   - **🎯 Big Idea do Ciclo** (NOVO bloco antes das datas-chave): Tese · Mecanismo único · Promessa do método · CTA do mês
-   - Datas-chave (bullets)
-   - Pilares ativados (numerados)
-   - Territórios discursivos (inline com `·`)
-   - Separador `---`
-   - Por semana: heading 3 toggle verde com tema + callouts (🎬 Reel / 🎠 Carrossel). Cada callout inclui: Conteúdo NN · Formato · Camada · Eixo · **Awareness** · **Relação com Big Idea**
-   - Separador `---`
-   - Validações operacionais (incluindo agora: aderência à Big Idea + distribuição por awareness)
-   - Próximo passo
-3. **Atenção técnica de renderização Notion:**
-   - Usar `{toggle="true" color="green_bg"}` no heading 3
-   - Indentar conteúdo do toggle com 1 tab
-   - Callout: `<callout icon="EMOJI">...</callout>`, conteúdo indentado 1 tab dentro
-   - Caracteres reais (newlines, emojis) — nunca `\n` ou `\uXXXX`
-   - Pipe escapado como `\|` em assinaturas
-
-**Modo `refazer`:**
+#### Modo `refazer`
 
 1. Buscar a subpágina de Estratégia já existente (filha do card, título começando com `🧠 Estratégia`).
 2. Ler o callout "Feedback do aprovador" do card pai. Se vazio: comentar no card "Status `🤖 Refazendo Estratégia` mas callout de feedback vazio. Não há orientações pra refazer." + abort sem alterar status.
 3. Ler conteúdo atual da subpágina (V1 ou versão mais recente).
 4. **Preservar histórico:** dentro da subpágina, criar (ou atualizar) um toggle no FINAL chamado `📚 Versões anteriores` (color: gray_bg). Mover o conteúdo da V atual pra dentro desse toggle, prefixado por `### V{N} · gerada em {data ISO}` (incrementar N).
-5. Aplicar correções do feedback gerando V{N+1}. Reescrever o corpo principal da subpágina com a nova versão.
+5. Aplicar correções do feedback gerando V{N+1}. Reescrever o corpo principal da subpágina com a nova versão. Use `notion-update-page` `replace_content` na **subpágina** (não no card pai) — o card pai não deve ser tocado em modo refazer (já está com link da subpágina correto, callouts de feedback intactos).
 6. Adicionar nota no início da subpágina (após o quote header): `> **Versão {N+1}** · refeita em {data ISO} aplicando feedback do aprovador. Histórico no toggle "📚 Versões anteriores" no final desta página.`
+7. **NÃO** tocar no card pai. NÃO sobrescrever os callouts de feedback.
+
+#### Detalhes técnicos de renderização Notion (lembrete final)
+
+- Heading toggle: `### **Título** {toggle="true" color="green_bg"}` — atributo entre chaves no FINAL do heading
+- Conteúdo do toggle: indentar 1 tab abaixo do heading
+- Callout: `<callout icon="EMOJI">` ... `</callout>` — tags em linhas separadas, conteúdo indentado 1 tab dentro
+- Newlines: caracteres reais (apertando Enter no editor). No JSON do tool call, `"\n"` (uma barra) → Notion recebe newline real.
+- Emojis: caracteres literais (📝 🎬 🎠 🧠) — nunca `\uXXXX`
+- Pipe em assinaturas dentro de tabela ou inline: `CRM 25641 \| RQE 14786`. Fora de tabela, pipe normal.
+- `<page url="...">texto</page>` pra referenciar página filha (subpágina de estratégia)
 
 ### Fase 7 — Atualização de status
 
