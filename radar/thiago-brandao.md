@@ -57,14 +57,35 @@ Buscar sempre em português **e** inglês. As palavras abaixo são ponto de part
 | maio | Dia do Desafio (última quarta-feira) | Performance |
 | junho | Maratona do Rio | Performance |
 | setembro | Maratona de Berlim; Dia Mundial do Coração (29/9) | Performance |
-| outubro | Maratona de Chicago; Dia Nacional de Prevenção da Obesidade (11/10); Dia Mundial da Artrite (12/10); Dia Mundial de Combate à Dor; Dia Mundial da Osteoporose (20/10); Dia do Médico (18/10) | Vários |
+| outubro | Maratona de Chicago; Dia Nacional de Prevenção da Obesidade (11/10); Dia Mundial da Artrite (12/10); Dia Mundial de Combate à Dor (17/10, fontes divergem, confirmar na SBED); Dia Mundial da Osteoporose (20/10); Dia do Médico (18/10) | Vários |
 | novembro | Maratona de Nova York (primeiro domingo); Dia Mundial do Diabetes (14/11) | Performance, Emagrecimento |
 | dezembro | Corrida de São Silvestre (31/12); metas de ano novo | Performance, Emagrecimento |
+
+## Calendário de congressos (mês aproximado, confirmar a edição do ano)
+
+Na semana em que um destes acontece, a busca começa por ele.
+
+| Quando | Congresso | Eixo |
+|---|---|---|
+| março | AAOS (ortopedia, EUA) | Dor, Regenerativa |
+| maio | ECO (Congresso Europeu de Obesidade) | Emagrecimento |
+| maio/junho | ACSM Annual Meeting (medicina do esporte) | Performance |
+| junho | ADA Scientific Sessions (diabetes) | Emagrecimento |
+| junho | ISSCR (células-tronco) | Regenerativa |
+| setembro/outubro | EASD (diabetes, Europa) | Emagrecimento |
+| setembro/outubro | ASTRO (radioterapia, inclui artrose de joelho) | Dor |
+| novembro | ObesityWeek (EUA) | Emagrecimento |
+| bienal | IASP World Congress on Pain; ISAKOS | Dor, Regenerativa |
+
+## Fontes de sinal fraco (medicina regenerativa)
+
+Eixo com pouca notícia semanal. Checar: portal do CFM (resoluções e pareceres), Anvisa (terapias avançadas, alertas), cartas de advertência da FDA sobre células-tronco e exossomos, ISSCR. Referência recente: Resolução CFM 2.464/2026 sobre PRP (julho de 2026).
 
 ## Cuidados específicos deste cliente
 
 - **CFM 2.336/2023:** sem promessa de resultado, sem antes/depois sensacionalista, sem urgência artificial.
 - **GLP-1:** nunca sugerir dose, uso off-label ou versão manipulada. Notícia sobre caneta irregular é pauta de **alerta e orientação**, não de oferta.
+- **Nomes comerciais** (Mounjaro, Wegovy, Ozempic etc.): nunca no hook nem na capa. No roteiro e na legenda, preferir o princípio ativo; o nome comercial só aparece quando necessário para o público entender, em tom neutro.
 - **Regenerativa:** muitas terapias (exossomos, células-tronco fora de protocolo, peptídeos como BPC-157) têm restrição regulatória ou evidência fraca no Brasil. Abordar pelo ângulo "o que a ciência sabe hoje" e sinalizar o status regulatório.
 - **Estudo em animal ou in vitro:** marcar como tal. Preprint: marcar como "ainda não revisado por pares".
 - **Famosos:** usar como gancho de contexto, sem diagnosticar ou especular sobre a saúde de ninguém.

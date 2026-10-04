@@ -13,7 +13,8 @@ agencia-am/
 │   └── AM_radar_noticias.md # Radar semanal de notícias que viram pauta
 │
 ├── radar/                   # Configuração do radar de pautas, um arquivo por médico
-│   └── thiago-brandao.md    # Performance, emagrecimento, dor, regenerativa, corrida
+│   ├── thiago-brandao.md    # Performance, emagrecimento, dor, regenerativa, corrida
+│   └── exemplos/            # Relatórios de referência (1º teste: 2026-10-04)
 │
 ├── copy-modules/            # Squad de copywriting encarnada em módulos
 │   ├── big-idea-mensal.md           # Todd Brown (E5 Method)
