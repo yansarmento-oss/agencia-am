@@ -9,7 +9,11 @@ agencia-am/
 ├── skills/                  # Skills (slash commands) que as routines invocam
 │   ├── AM_cliente.md        # Trigger 0 — onboarding de novo cliente
 │   ├── AM_estrategia.md     # Trigger 1 — gera/refaz subpágina de Estratégia
-│   └── AM_roteiros.md       # Trigger 2 — gera/refaz subpágina de Roteiros
+│   ├── AM_roteiros.md       # Trigger 2 — gera/refaz subpágina de Roteiros
+│   └── AM_radar_noticias.md # Radar semanal de notícias que viram pauta
+│
+├── radar/                   # Configuração do radar de pautas, um arquivo por médico
+│   └── thiago-brandao.md    # Performance, emagrecimento, dor, regenerativa, corrida
 │
 ├── copy-modules/            # Squad de copywriting encarnada em módulos
 │   ├── big-idea-mensal.md           # Todd Brown (E5 Method)
@@ -65,6 +69,14 @@ Mesma lógica pros outros 3 triggers (`am-estrategia-refazer`, `am-roteiros-gera
 | `am-estrategia-refazer` | `🤖 Refazendo Estratégia` | `AM_estrategia.md` | refazer |
 | `am-roteiros-gerar` | `🤖 Gerando Roteiros` | `AM_roteiros.md` | gerar |
 | `am-roteiros-refazer` | `🤖 Refazendo Roteiros` | `AM_roteiros.md` | refazer |
+
+## Radar de pautas (routine agendada)
+
+| Routine | Disparo | Skill | Config |
+|---|---|---|---|
+| `am-radar-thiago` | Cron, domingo ~17h (Brasília) | `AM_radar_noticias.md` | `radar/thiago-brandao.md` |
+
+Varre ciência, regulação, imprensa e cultura dos últimos 7 dias, verifica a fonte primária, pontua cada notícia (aderência, timing, autoridade, evidência, menos risco CFM) e entrega no log da routine as melhores pautas com ângulo, formato, hook e cuidados, mais o calendário dos próximos 30 dias. Para adicionar outro médico: copiar `radar/thiago-brandao.md` com o novo slug, ajustar eixos e fontes, e criar uma routine apontando para o slug.
 
 ## Edição
 
