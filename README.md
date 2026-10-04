@@ -74,9 +74,9 @@ Mesma lógica pros outros 3 triggers (`am-estrategia-refazer`, `am-roteiros-gera
 
 | Routine | Disparo | Skill | Config |
 |---|---|---|---|
-| `am-radar-thiago` | Cron, domingo ~17h (Brasília) | `AM_radar_noticias.md` | `radar/thiago-brandao.md` |
+| `am-radar-thiago` ([`trig_01R4y5xnpadkYRASqcHzuYLu`](https://claude.ai/code/triggers/trig_01R4y5xnpadkYRASqcHzuYLu)) | Cron `46 16 * * 0` America/Sao_Paulo (domingo 16h46) | `AM_radar_noticias.md` | `radar/thiago-brandao.md` |
 
-Varre ciência, regulação, imprensa e cultura dos últimos 7 dias, verifica a fonte primária, pontua cada notícia (aderência, timing, autoridade, evidência, menos risco CFM) e entrega no log da routine as melhores pautas com ângulo, formato, hook e cuidados, mais o calendário dos próximos 30 dias. Para adicionar outro médico: copiar `radar/thiago-brandao.md` com o novo slug, ajustar eixos e fontes, e criar uma routine apontando para o slug.
+Varre ciência, regulação, imprensa e cultura dos últimos 7 dias, verifica a fonte primária, pontua cada notícia (aderência, timing, autoridade, evidência, menos risco CFM) e entrega no log da routine as melhores pautas com ângulo, formato, hook e cuidados, mais o calendário dos próximos 30 dias. O relatório sai no log da sessão em [claude.ai/code/sessions](https://claude.ai/code/sessions). A routine não usa conectores. Para ela ler sempre a versão mais nova da skill, conectar o repo `yansarmento-oss/agencia-am` na UI da routine (mesmo passo das outras). Para adicionar outro médico: copiar `radar/thiago-brandao.md` com o novo slug, ajustar eixos e fontes, e criar uma routine apontando para o slug.
 
 ## Edição
 
